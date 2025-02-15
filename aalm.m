@@ -11,9 +11,9 @@ function [out1,out2] = aalm(f,df,x,varargin)
 	-- optional args {'solver' (char), 'tol' (float), and 'maxiters' (float)}
 	 solvers = {'newton','newt','lm','LM'}.
 
-	 -- AALM(f,df,x,'aa') implements Anderson acceleration. 
-	 -- AALM(f,df,x,'aa',m) sets depth to m.
-	 -- AALM(f,df,x,'gsg') implements adaptive gamma safeguarding.
+	 -- aalm(f,df,x,'aa') implements Anderson acceleration. 
+	 -- aalm(f,df,x,'aa',m) sets depth to m.
+	 -- aalm(f,df,x,'gsg',r) implements adaptive gamma safeguarding with tolerance r.
 
 	%}
 
