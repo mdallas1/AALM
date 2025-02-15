@@ -111,8 +111,6 @@ function [out1,out2] = aalm(f,df,x,varargin)
 				mm = min(m,iters-1);
 				E = x_arr(:,1:end-1) - x_arr(:,2:end);
 				F = d_arr(:,1:end-1) - d_arr(:,2:end);
-				%E = x_arr(:,1:mm-1) - x_arr(:,2:mm);
-				%F = d_arr(:,1:mm-1) - d_arr(:,2:mm);
 				gamma = F(:,1:mm)\d_arr(:,1);
 			end
 
