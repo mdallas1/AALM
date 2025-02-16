@@ -11,24 +11,22 @@ function [out1,out2] = aalm(f,df,x,varargin)
 	-- optional args {'solver' (char), 'tol' (float), and 'maxiters' (float)}
 	 solvers = {'newton','newt','lm','LM'}.
 
-	 -- aalm(f,df,x,'aa') implements Anderson acceleration. 
-	 -- aalm(f,df,x,'aa',m) sets depth to m.
-	 -- aalm(f,df,x,'gsg',r) implements adaptive gamma safeguarding with tolerance r.
+	-- aalm(f,df,x,'aa') implements Anderson acceleration. 
+	-- aalm(f,df,x,'aa',m) sets depth to m.
+	-- aalm(f,df,x,'gsg',r) implements adaptive gamma safeguarding with tolerance r.
+	-- aalm(f,df,x,'print') prints residual at each iteration. 
 
 	%}
 
 	solvers = {'newton','newt','lm','LM'};
 
-	f = @(x) f(x);
-	df = @(x) df(x);
-	x = x ;
-	fx = f(x); dfx = df(x); 
-	iters = 0; 
-	res = norm(f(x)); I = eye(length(x));
+	f = @(x) f(x); df = @(x) df(x);
+	x = x ; fx = f(x); dfx = df(x); 
+	iters = 0; res = norm(fx); I = eye(length(x));
 
 	if nargin < 4	
 		tol = 1e-8; maxiters = 100; 
-		solver = 'lm'; aa = 1; m = 1;
+		solver = 'lm'; aa = 1; m = 1; gsg = 0;
 	end
 	
 	if nargin >= 4 
@@ -55,8 +53,7 @@ function [out1,out2] = aalm(f,df,x,varargin)
 		else 
 			maxiters = 100;
 		end
-	end
-
+	
 	if !isempty(find(strcmp('aa',varargin)))
 		aa = 1;	
 		aaindex = find(strcmp('aa',varargin))(1);		
@@ -87,28 +84,50 @@ function [out1,out2] = aalm(f,df,x,varargin)
 		gsg = 0;
 	end
 
+	end
+
 	res_arr = []; x_arr = []; d_arr = []; xaa_arr = [];
 
 	if res < tol 
 		disp("Initial iterate satisfies tolerance.");
 	end
 
+	% SOLVER
 	while (iters < maxiters && res > tol)
-		iters = iters+1;
-		x_arr = [x x_arr];
+
+		
 		res_arr = [res res_arr];
-		if iters > 1
+		
+		if iters < 1
+
+			x_arr = [x x_arr]; 
+
+			if strcmp(solver,'lm') || strcmp(solver,'LM')  
+				mu = 0.5*1e-8*norm(fx)^2; % LM parameter (from KaYaFu03)
+				d = - (dfx'*dfx + mu * I)\(dfx'*fx);
+			elseif strcmp(solver,'newt') || strcmp(solver,'newton')
+				d = -dfx\fx;
+			end
+			%d_arr = [d d_arr(1:mm-1)];
+			x_arr = [x x_arr];
+			d_arr = [d d_arr];
+			x = x+d;
+
+		else 
 			if strcmp(solver,'lm') || strcmp(solver,'LM')
 				mu = min(mu,nfx^2);						
 				d = - (dfx'*dfx + mu * I)\(dfx'*fx);
 			elseif strcmp(solver,'newton') || strcmp(solver,'newt')
 				d = -dfx\fx;
 			end
-			d_arr = [d d_arr];
-		
+
 			% ANDERSON	
 			if aa 
-				mm = min(m,iters-1);
+				mm = min(m,iters);
+				x_arr = [x x_arr(:,1:mm)];
+				d_arr = [d d_arr(:,1:mm)];
+				%E = x_arr(:,1:end-1) - x_arr(:,2:end);
+				%F = d_arr(:,1:end-1) - d_arr(:,2:end);
 				E = x_arr(:,1:end-1) - x_arr(:,2:end);
 				F = d_arr(:,1:end-1) - d_arr(:,2:end);
 				gamma = F(:,1:mm)\d_arr(:,1);
@@ -125,16 +144,9 @@ function [out1,out2] = aalm(f,df,x,varargin)
 			else 
 				x = x+d;
 			end
-		else 
-			if strcmp(solver,'lm') || strcmp(solver,'LM')  
-				mu = 0.5*1e-8*norm(fx)^2; % LM parameter (from KaYaFu03)
-				d = - (dfx'*dfx + mu * I)\(dfx'*fx);
-			elseif strcmp(solver,'newt') || strcmp(solver,'newton')
-				d = -dfx\fx;
-			end
-			d_arr = [d d_arr];
-			x = x+d;
+			
 		end
+		iters = iters+1;
 		fx = f(x);
 		nfx = norm(fx);
 		dfx = df(x); 
@@ -142,10 +154,12 @@ function [out1,out2] = aalm(f,df,x,varargin)
 		%if iters > 1
 		%	log(res_arr(:,1))/log(res_arr(:,2))
 		%end
-		fprintf("iter \t res \n-----------------------------------\n%g \t %.3e\n",iters,res);
+		if !isempty(find(strcmp('print',varargin)))
+			fprintf("iter \t res \n-----------------------------------\n%g \t %.3e\n",iters,res);	
+		end
 	end
 	res_arr = [res res_arr];
-	semilogy([1:iters+1],flip(res_arr),'r-*','Linewidth',1.5);
+	semilogy([0:iters],flip(res_arr),'r-*','Linewidth',1.5);
 
 end
 			
