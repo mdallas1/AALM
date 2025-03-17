@@ -1,6 +1,6 @@
-function [out1,out2,out3] = gamma_safeguard(w1,w0,gamma,tol,adap,M)
-	% =================================================================
-	% Safeguarding scheme for Newton-Anderson with Anderson depth 1
+function [out1,out2,out3,varargout] = gamma_safeguard(w1,w0,gamma,tol,adap,M)
+	% ===================================================================
+	% Safeguarding scheme for Newton-Anderson with Anderson acceleration.
 	% Author: Matt Dallas, University of Dallas Mathematics Dept
 	% email: mdallas@udallas.edu
 	%
@@ -12,7 +12,8 @@ function [out1,out2,out3] = gamma_safeguard(w1,w0,gamma,tol,adap,M)
 	% 
 	% Present form as well as adaptive version analyzed in 
 	%
-	%	Dallas M., Pollock S., Rebholz L. G., ANALYSIS OF AN ADAPTIVE SAFEGUARDED 	 % 	 NEWTON-ANDERSON ALGORITHM OF DEPTH ONE WITH APPLICATIONS TO FLUID 
+	%	Dallas M., Pollock S., Rebholz L. G., ANALYSIS OF AN ADAPTIVE SAFEGUARDED 	 
+	% 	NEWTON-ANDERSON ALGORITHM OF DEPTH ONE WITH APPLICATIONS TO FLUID 
 	%	PROBLEMS. ACSE. 2024. doi:10.3934/acse.2024013
 	%
 	% -----------------------------------------------------------------
@@ -33,6 +34,9 @@ function [out1,out2,out3] = gamma_safeguard(w1,w0,gamma,tol,adap,M)
 	% 	- A weakened form of safeguarding is obtained by replacing 
 	% 	  "gamma>=1" with "cos(w_k+1,w_k)>0.942", or more precisely, 
 	% 	  |\beta|<2*sqrt(2)/3. This allows gamma to reach 2. 
+	%
+	%   - See Pollock, Schwarz, Benchmarking results for the Newton–Anderson method, 
+	%	  Results in Applied Mathematics, 2020. 
 	% =================================================================
 	normw1 = sqrt(w1'*M*w1);
 	normw0 = sqrt(w0'*M*w0);
@@ -50,9 +54,8 @@ function [out1,out2,out3] = gamma_safeguard(w1,w0,gamma,tol,adap,M)
     elseif abs(gamma)/(1-gamma)>beta
 		lambda = beta/(gamma*(beta+sign(gamma)));
     end
-	out3 = r;
-	out2 = lambda;
-    out1 = lambda*gamma;
+	out3 = r; out2 = lambda; out1 = lambda*gamma;
+	varargout{1} = normw1; varargout{2} = normw0;
 end
 
 

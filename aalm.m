@@ -1,4 +1,4 @@
-function [out1,out2] = aalm(f,df,x,varargin)
+function aalm(f,df,x,varargin)
 	%{
 
 	AALM(f,df,x)
@@ -22,6 +22,11 @@ function [out1,out2] = aalm(f,df,x,varargin)
 	assert(isa(f,'function_handle'));
 	assert(isa(df,'function_handle'));
 	assert(isa(x,'double'));
+
+	[x_m,x_n] = size(x); 
+	if x_n > x_m 
+		x = x';
+	end
 
 	p = inputParser(); 
 	p.FunctionName = 'aalm' ; 
@@ -83,11 +88,9 @@ function [out1,out2] = aalm(f,df,x,varargin)
 
 			x_arr = [x x_arr]; 
 
-			%if strcmp(solver,'lm') || strcmp(solver,'LM')  
 			if any(strcmp(solver,{'lm','LM'}))
 				mu = 0.5*1e-8*norm(fx)^2; % LM parameter (from KaYaFu03)
 				d = - (dfx'*dfx + mu * I)\(dfx'*fx);
-			%elseif strcmp(solver,'newt') || strcmp(solver,'newton')
 			elseif any(strcmp(solver,{'newt','newton'}))
 				d = -dfx\fx;
 			end
@@ -115,7 +118,7 @@ function [out1,out2] = aalm(f,df,x,varargin)
 			end
 
 			if gsg 
-				[gamma,lam,r] = gamma_safeguard(d_arr(:,1),d_arr(:,2),gamma,gsg_tol,1,eye(length(d)));
+				[gamma,lam,r] = gamma_safeguard(d_arr(:,1),d_arr(:,2),gamma,gsg_tol,1,I);
 			end
 
 			if aa 
@@ -129,16 +132,14 @@ function [out1,out2] = aalm(f,df,x,varargin)
 		nfx = norm(fx);
 		dfx = df(x); 
 		res = nfx; 
-		%if iters > 1
-		%	log(res_arr(:,1))/log(res_arr(:,2))
-		%end
-		if any(strcmp('print',varargin))
+		if p.Results.print
 			fprintf("iter \t res \n-----------------------------------\n%g \t %.3e\n",iters,res);	
 		end
 	end
 	res_arr = [res res_arr];
 	%semilogy([0:iters],flip(res_arr),'r-*','Linewidth',1.5);
 	semilogy([0:iters],flip(res_arr),plot_options{:});
+	x
 
 end
 			
